@@ -10,29 +10,18 @@ import (
 )
 
 const (
-	EmailInputBlock = "email-input-block"
-	EmailInput      = "email"
-	TokenInputBlock = "token-input-block"
-	TokenInput      = "token"
+	EmailActionID = slackworkflowbot.ActionID("email-input")
+	EmailBlockID  = slackworkflowbot.BlockID("email")
+	TokenActionID = slackworkflowbot.ActionID("token-input")
+	TokenBlockID  = slackworkflowbot.BlockID("token")
 )
 
 func saveUserSettingsForWrokflowStep(appCtx slackworkflowbot.AppContext, message slack.InteractionCallback) error {
 	blockAction := message.View.State.Values
-	fmt.Printf("blockAction: %+v\n", blockAction)
-	emailValue := blockAction[EmailInput][EmailInputBlock].Value
-	tokenValue := blockAction[TokenInput][TokenInputBlock].Value
-	log.Println(fmt.Sprintf("user input email: %s", emailValue))
-	log.Println(fmt.Sprintf("user input token: %s", tokenValue))
+	inEmail := slackworkflowbot.CreateTextWorkflowStepInput(blockAction, EmailActionID, EmailBlockID, false)
+	inToken := slackworkflowbot.CreateTextWorkflowStepInput(blockAction, TokenActionID, TokenBlockID, true)
 
-	in := &slack.WorkflowStepInputs{
-		EmailInput: slack.WorkflowStepInputElement{
-			Value: emailValue,
-		},
-		TokenInput: slack.WorkflowStepInputElement{
-			Value:                   tokenValue,
-			SkipVariableReplacement: true,
-		},
-	}
+	in := slackworkflowbot.MergeWorkflowStepInput(inEmail, inToken)
 
 	appCtx.Slack.SaveWorkflowStepConfiguration(
 		message.WorkflowStep.WorkflowStepEditID,
@@ -43,15 +32,8 @@ func saveUserSettingsForWrokflowStep(appCtx slackworkflowbot.AppContext, message
 }
 
 func replyWithConfigurationView(appCtx slackworkflowbot.AppContext, message slack.InteractionCallback, privateMetaData string, externalID string) error {
-	emailText := slack.NewTextBlockObject("plain_text", EmailInput, false, false)
-	emailTextPlaceholder := slack.NewTextBlockObject("plain_text", "email", false, false)
-	emailElement := slack.NewPlainTextInputBlockElement(emailTextPlaceholder, EmailInputBlock)
-	emailInput := slack.NewInputBlock("email", emailText, emailElement)
-
-	tokenText := slack.NewTextBlockObject("plain_text", TokenInput, false, false)
-	tokenTextPlaceholder := slack.NewTextBlockObject("plain_text", "enter your sendgrid token", false, false)
-	tokenElement := slack.NewPlainTextInputBlockElement(tokenTextPlaceholder, TokenInputBlock)
-	tokenInput := slack.NewInputBlock("token", tokenText, tokenElement)
+	emailInput := slackworkflowbot.CreateTextInputBlock(EmailActionID, EmailBlockID, "email", "", false, false)
+	tokenInput := slackworkflowbot.CreateTextInputBlock(TokenActionID, TokenBlockID, "token", "", false, false)
 
 	blocks := slack.Blocks{
 		BlockSet: []slack.Block{

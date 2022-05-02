@@ -42,6 +42,17 @@ type (
 var _ http.Handler = &SecretsVerifierMiddleware{}
 
 type (
+	SlackWorkflowOpenView interface {
+		OpenView(triggerID string, view slack.ModalViewRequest) (*slack.ViewResponse, error)
+	}
+	SlackWorkflowSaveConfigration interface {
+		SaveWorkflowStepConfiguration(workflowStepEditID string, inputs *slack.WorkflowStepInputs, outputs *[]slack.WorkflowStepOutput) error
+	}
+	// workflows.stepCompleted and workflows.stepFailed
+	SlackWorkflowResultClient interface{}
+)
+
+type (
 	ReplyWithConfigurationView = func(
 		appContext AppContext,
 		message slack.InteractionCallback,
