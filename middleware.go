@@ -1,4 +1,4 @@
-package main
+package slackworkflowbot
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ func (v *SecretsVerifierMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Req
 	r.Body.Close()
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
-	sv, err := slack.NewSecretsVerifier(r.Header, appCtx.config.signingSecret)
+	sv, err := slack.NewSecretsVerifier(r.Header, v.appCtx.config.signingSecret)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -36,6 +36,9 @@ func (v *SecretsVerifierMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Req
 	v.handler.ServeHTTP(w, r)
 }
 
-func NewSecretsVerifierMiddleware(h http.Handler) *SecretsVerifierMiddleware {
-	return &SecretsVerifierMiddleware{h}
+func NewSecretsVerifierMiddleware(h http.Handler, appCtx AppContext) *SecretsVerifierMiddleware {
+	return &SecretsVerifierMiddleware{
+		appCtx,
+		h,
+	}
 }
