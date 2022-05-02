@@ -17,29 +17,29 @@ const (
 )
 
 func saveUserSettingsForWrokflowStep(appCtx slackworkflowbot.AppContext, message slack.InteractionCallback) error {
-			blockAction := message.View.State.Values
-			fmt.Printf("blockAction: %+v\n", blockAction)
-			emailValue := blockAction[EmailInput][EmailInputBlock].Value
-			tokenValue := blockAction[TokenInput][TokenInputBlock].Value
-			log.Println(fmt.Sprintf("user input email: %s", emailValue))
-			log.Println(fmt.Sprintf("user input token: %s", tokenValue))
+	blockAction := message.View.State.Values
+	fmt.Printf("blockAction: %+v\n", blockAction)
+	emailValue := blockAction[EmailInput][EmailInputBlock].Value
+	tokenValue := blockAction[TokenInput][TokenInputBlock].Value
+	log.Println(fmt.Sprintf("user input email: %s", emailValue))
+	log.Println(fmt.Sprintf("user input token: %s", tokenValue))
 
-			in := &slack.WorkflowStepInputs{
-				EmailInput: slack.WorkflowStepInputElement{
-					Value: emailValue,
-				},
-				TokenInput: slack.WorkflowStepInputElement{
-					Value:                   tokenValue,
-					SkipVariableReplacement: true,
-				},
-			}
+	in := &slack.WorkflowStepInputs{
+		EmailInput: slack.WorkflowStepInputElement{
+			Value: emailValue,
+		},
+		TokenInput: slack.WorkflowStepInputElement{
+			Value:                   tokenValue,
+			SkipVariableReplacement: true,
+		},
+	}
 
-			appCtx.Slack.SaveWorkflowStepConfiguration(
-				message.WorkflowStep.WorkflowStepEditID,
-				in,
-				nil,
-			)
-			return nil
+	appCtx.Slack.SaveWorkflowStepConfiguration(
+		message.WorkflowStep.WorkflowStepEditID,
+		in,
+		nil,
+	)
+	return nil
 }
 
 func replyWithConfigurationView(appCtx slackworkflowbot.AppContext, message slack.InteractionCallback, privateMetaData string, externalID string) error {

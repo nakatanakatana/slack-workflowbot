@@ -3,7 +3,7 @@ package slackworkflowbot
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 
@@ -18,7 +18,7 @@ func CreateHandleWorkflowStep(appCtx AppContext) http.HandlerFunc {
 		}
 
 		// see: https://github.com/slack-go/slack/blob/master/examples/eventsapi/events.go
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -32,8 +32,9 @@ func CreateHandleWorkflowStep(appCtx AppContext) http.HandlerFunc {
 		}
 		fmt.Println("my-workflow", eventsAPIEvent, string(body))
 
-		// see: https://api.slack.com/apis/connections/events-api#subscriptions
-		if eventsAPIEvent.Type == slackevents.URLVerification {
+		switch eventsAPIEvent.Type {
+		case slackevents.URLVerification:
+			// see: https://api.slack.com/apis/connections/events-api#subscriptions
 			var r *slackevents.ChallengeResponse
 			err := json.Unmarshal([]byte(body), &r)
 			if err != nil {
@@ -43,12 +44,11 @@ func CreateHandleWorkflowStep(appCtx AppContext) http.HandlerFunc {
 			}
 
 			w.Header().Set("Content-Type", "text")
-			w.Write([]byte(r.Challenge))
+			_, _ = w.Write([]byte(r.Challenge))
 			return
-		}
 
-		// see: https://api.slack.com/apis/connections/events-api#receiving_events
-		if eventsAPIEvent.Type == slackevents.CallbackEvent {
+		case slackevents.CallbackEvent:
+			// see: https://api.slack.com/apis/connections/events-api#receiving_events
 			innerEvent := eventsAPIEvent.InnerEvent
 			switch ev := innerEvent.Data.(type) {
 
@@ -68,9 +68,9 @@ func CreateHandleWorkflowStep(appCtx AppContext) http.HandlerFunc {
 				log.Printf("[WARN] unknown inner event type: %s", eventsAPIEvent.InnerEvent.Type)
 				return
 			}
-		}
 
-		w.WriteHeader(http.StatusBadRequest)
-		log.Printf("[WARN] unknown event type: %s", eventsAPIEvent.Type)
+			w.WriteHeader(http.StatusBadRequest)
+			log.Printf("[WARN] unknown event type: %s", eventsAPIEvent.Type)
+		}
 	}
 }
