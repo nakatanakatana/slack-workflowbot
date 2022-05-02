@@ -32,13 +32,16 @@ func (v *SecretsVerifierMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Req
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-
-	v.handler.ServeHTTP(w, r)
 }
 
-func NewSecretsVerifierMiddleware(h http.Handler, appCtx AppContext) *SecretsVerifierMiddleware {
-	return &SecretsVerifierMiddleware{
+func NewSecretsVerifierMiddleware(appCtx AppContext) Middleware {
+	secretsVerifier := &SecretsVerifierMiddleware{
 		appCtx,
-		h,
+	}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			secretsVerifier.ServeHTTP(w, r)
+			next.ServeHTTP(w, r)
+		})
 	}
 }

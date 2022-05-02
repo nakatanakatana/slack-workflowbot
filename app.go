@@ -9,6 +9,8 @@ func CreateAppContext(
 	signingSecret SigningSecret,
 	workflowStep WorkflowStepFunc,
 	workflowStepCallbackID CallbackID,
+	replyWithConfigurationView ReplyWithConfigurationView,
+	saveUserSettingsForWorkflowStep SaveUserSettingsForWorkflowStep,
 ) AppContext {
 	var appCtx AppContext
 	appCtx.config.botToken = string(botToken)
@@ -17,6 +19,8 @@ func CreateAppContext(
 	appCtx.Slack = slack.New(appCtx.config.botToken)
 	appCtx.workflowStep = workflowStep
 	appCtx.workflowStepCallbackID = workflowStepCallbackID
+	appCtx.replyWithConfigurationView = replyWithConfigurationView
+	appCtx.saveUserSettingsForWorkflowStep = saveUserSettingsForWorkflowStep
 
 	return appCtx
 }

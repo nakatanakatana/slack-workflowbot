@@ -8,52 +8,56 @@ import (
 )
 
 type (
-	ActionID   string
-	BlockID    string
-	CallbackID string
-
+	ActionID      string
+	BlockID       string
+	CallbackID    string
 	BotToken      string
 	SigningSecret string
 )
 
 type (
+	AppContext struct {
+		Slack                           *slack.Client
+		config                          configuration
+		workflowStep                    WorkflowStepFunc
+		workflowStepCallbackID          CallbackID
+		replyWithConfigurationView      ReplyWithConfigurationView
+		saveUserSettingsForWorkflowStep SaveUserSettingsForWorkflowStep
+	}
 	configuration struct {
 		botToken      string
 		signingSecret string
 	}
-	AppContext struct {
-		Slack                  *slack.Client
-		config                 configuration
-		workflowStep           WorkflowStepFunc
-		workflowStepCallbackID CallbackID
-	}
 )
 
 type (
+	Middleware = func(next http.Handler) http.Handler
+
 	SecretsVerifierMiddleware struct {
-		appCtx  AppContext
-		handler http.Handler
+		appCtx AppContext
 	}
 )
 
+// var _ Middleware = &SecretsVerifierMiddleware{}
 var _ http.Handler = &SecretsVerifierMiddleware{}
 
 type (
 	ReplyWithConfigurationView = func(
+		appContext AppContext,
 		message slack.InteractionCallback,
 		privateMetadata string,
 		externalID string,
 	) error
 
 	SaveUserSettingsForWorkflowStep = func(
-		workflowStepEditID string,
-		inputs *slack.WorkflowStepInputs,
-		outputs *[]slack.WorkflowStepOutput,
+		appContext AppContext,
+		message slack.InteractionCallback,
 	) error
 )
 
 type (
 	WorkflowStepFunc = func(
+		appContext AppContext,
 		workflowStep slackevents.EventWorkflowStep,
 	)
 )

@@ -1,12 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
-	"net/url"
 
 	slackworkflowbot "github.com/nakatanakatana/slack-workflowbot"
 	"github.com/slack-go/slack"
@@ -14,77 +10,44 @@ import (
 )
 
 const (
+	EmailInputBlock = "email-input-block"
+	EmailInput      = "email"
 	TokenInputBlock = "token-input-block"
 	TokenInput      = "token"
 )
 
-func createHandleInteraction(appCtx slackworkflowbot.AppContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		jsonStr, err := url.QueryUnescape(string(body)[8:])
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		var message slack.InteractionCallback
-		if err := json.Unmarshal([]byte(jsonStr), &message); err != nil {
-			log.Printf("[ERROR] Failed to decode json message from slack: %s", jsonStr)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		fmt.Println("interaction", message.Type, string(body))
-
-		switch message.Type {
-		case slack.InteractionTypeWorkflowStepEdit:
-			// https://api.slack.com/workflows/steps#handle_config_view
-			err := replyWithConfigurationView(appCtx, message, "", "")
-			if err != nil {
-				log.Printf("[ERROR] Failed to open configuration modal in slack: %s", err.Error())
-			}
-
-		case slack.InteractionTypeViewSubmission:
-			// https://api.slack.com/workflows/steps#handle_view_submission
-
-			// process user inputs
-			// this is just for demonstration, so we print it to console only
+func saveUserSettingsForWrokflowStep(appCtx slackworkflowbot.AppContext, message slack.InteractionCallback) error {
 			blockAction := message.View.State.Values
 			fmt.Printf("blockAction: %+v\n", blockAction)
+			emailValue := blockAction[EmailInput][EmailInputBlock].Value
 			tokenValue := blockAction[TokenInput][TokenInputBlock].Value
-			log.Println(fmt.Sprintf("user input: %s", tokenValue))
+			log.Println(fmt.Sprintf("user input email: %s", emailValue))
+			log.Println(fmt.Sprintf("user input token: %s", tokenValue))
 
 			in := &slack.WorkflowStepInputs{
+				EmailInput: slack.WorkflowStepInputElement{
+					Value: emailValue,
+				},
 				TokenInput: slack.WorkflowStepInputElement{
 					Value:                   tokenValue,
 					SkipVariableReplacement: true,
 				},
 			}
 
-			go appCtx.Slack.SaveWorkflowStepConfiguration(
+			appCtx.Slack.SaveWorkflowStepConfiguration(
 				message.WorkflowStep.WorkflowStepEditID,
 				in,
 				nil,
 			)
-			w.WriteHeader(http.StatusOK)
-
-		default:
-			log.Printf("[WARN] unknown message type: %s", message.Type)
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	}
+			return nil
 }
 
 func replyWithConfigurationView(appCtx slackworkflowbot.AppContext, message slack.InteractionCallback, privateMetaData string, externalID string) error {
+	emailText := slack.NewTextBlockObject("plain_text", EmailInput, false, false)
+	emailTextPlaceholder := slack.NewTextBlockObject("plain_text", "email", false, false)
+	emailElement := slack.NewPlainTextInputBlockElement(emailTextPlaceholder, EmailInputBlock)
+	emailInput := slack.NewInputBlock("email", emailText, emailElement)
+
 	tokenText := slack.NewTextBlockObject("plain_text", TokenInput, false, false)
 	tokenTextPlaceholder := slack.NewTextBlockObject("plain_text", "enter your sendgrid token", false, false)
 	tokenElement := slack.NewPlainTextInputBlockElement(tokenTextPlaceholder, TokenInputBlock)
@@ -92,6 +55,7 @@ func replyWithConfigurationView(appCtx slackworkflowbot.AppContext, message slac
 
 	blocks := slack.Blocks{
 		BlockSet: []slack.Block{
+			emailInput,
 			tokenInput,
 		},
 	}
@@ -101,7 +65,7 @@ func replyWithConfigurationView(appCtx slackworkflowbot.AppContext, message slac
 	return err
 }
 
-func doHeavyLoad(workflowStep slackevents.EventWorkflowStep) {
+func doHeavyLoad(_ slackworkflowbot.AppContext, workflowStep slackevents.EventWorkflowStep) {
 	// process user configuration e.g. inputs
 	log.Printf("Inputs:")
 	for name, input := range *workflowStep.Inputs {

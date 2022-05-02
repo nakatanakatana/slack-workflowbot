@@ -55,7 +55,7 @@ func CreateHandleWorkflowStep(appCtx AppContext) http.HandlerFunc {
 			// see: https://api.slack.com/events/workflow_step_execute
 			case *slackevents.WorkflowStepExecuteEvent:
 				if ev.CallbackID == string(appCtx.workflowStepCallbackID) {
-					go appCtx.workflowStep(ev.WorkflowStep)
+					go appCtx.workflowStep(appCtx, ev.WorkflowStep)
 					w.WriteHeader(http.StatusOK)
 					return
 				}

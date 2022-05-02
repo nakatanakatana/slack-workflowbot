@@ -20,16 +20,22 @@ func main() {
 	botToken := slackworkflowbot.BotToken(os.Getenv("SLACK_BOT_TOKEN"))
 	signingSecret := slackworkflowbot.SigningSecret(os.Getenv("SLACK_SIGNING_SECRET"))
 
-	appCtx := slackworkflowbot.CreateAppContext(botToken, signingSecret, doHeavyLoad, MyExampleWorkflowStepCallbackID)
-	handleInteraction := createHandleInteraction(appCtx)
+	appCtx := slackworkflowbot.CreateAppContext(
+		botToken,
+		signingSecret,
+		doHeavyLoad,
+		MyExampleWorkflowStepCallbackID,
+		replyWithConfigurationView,
+		saveUserSettingsForWrokflowStep,
+	)
+	handleInteraction := slackworkflowbot.CreateHandleInteraction(appCtx)
 	handleMyWorkflowStep := slackworkflowbot.CreateHandleWorkflowStep(appCtx)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(fmt.Sprintf("%s/interaction", APIBaseURL), handleInteraction)
-	mux.HandleFunc(fmt.Sprintf("%s/%s", APIBaseURL, MyExampleWorkflowStepCallbackID), handleMyWorkflowStep)
-
-	middleware := slackworkflowbot.NewSecretsVerifierMiddleware(mux, appCtx)
+	verifier := slackworkflowbot.NewSecretsVerifierMiddleware(appCtx)
+	mux.Handle(fmt.Sprintf("%s/interaction", APIBaseURL), verifier(handleInteraction))
+	mux.Handle(fmt.Sprintf("%s/%s", APIBaseURL, MyExampleWorkflowStepCallbackID), verifier(handleMyWorkflowStep))
 
 	log.Printf("starting server on :8080")
-	log.Fatal(http.ListenAndServe(":8080", middleware))
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
