@@ -52,9 +52,13 @@ func replyWithConfigurationView(
 	}
 
 	cmr := slack.NewConfigurationModalRequest(blocks, privateMetaData, externalID)
-	_, err := appCtx.SlackClient.OpenView(message.TriggerID, cmr.ModalViewRequest)
 
-	return fmt.Errorf("NewConfigurationModalRequest Failed: %w", err)
+	_, err := appCtx.SlackClient.OpenView(message.TriggerID, cmr.ModalViewRequest)
+	if err != nil {
+		return fmt.Errorf("NewConfigurationModalRequest Failed: %w", err)
+	}
+
+	return nil
 }
 
 func doHeavyLoad(
