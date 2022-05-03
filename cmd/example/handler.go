@@ -17,7 +17,7 @@ const (
 )
 
 func saveUserSettingsForWrokflowStep(
-	appCtx slackworkflowbot.AppContext,
+	appCtx slackworkflowbot.ConfigureStepContext,
 	message slack.InteractionCallback,
 ) error {
 	blockAction := message.View.State.Values
@@ -26,7 +26,7 @@ func saveUserSettingsForWrokflowStep(
 
 	in := slackworkflowbot.MergeWorkflowStepInput(inEmail, inToken)
 
-	err := appCtx.Slack.SaveWorkflowStepConfiguration(
+	err := appCtx.SlackClient.SaveWorkflowStepConfiguration(
 		message.WorkflowStep.WorkflowStepEditID,
 		in,
 		nil,
@@ -36,7 +36,7 @@ func saveUserSettingsForWrokflowStep(
 }
 
 func replyWithConfigurationView(
-	appCtx slackworkflowbot.AppContext,
+	appCtx slackworkflowbot.ConfigureStepContext,
 	message slack.InteractionCallback,
 	privateMetaData string,
 	externalID string,
@@ -52,12 +52,15 @@ func replyWithConfigurationView(
 	}
 
 	cmr := slack.NewConfigurationModalRequest(blocks, privateMetaData, externalID)
-	_, err := appCtx.Slack.OpenView(message.TriggerID, cmr.ModalViewRequest)
+	_, err := appCtx.SlackClient.OpenView(message.TriggerID, cmr.ModalViewRequest)
 
 	return fmt.Errorf("NewConfigurationModalRequest Failed: %w", err)
 }
 
-func doHeavyLoad(_ slackworkflowbot.AppContext, workflowStep slackevents.EventWorkflowStep) {
+func doHeavyLoad(
+	_ slackworkflowbot.StepExecuteContext,
+	workflowStep slackevents.EventWorkflowStep,
+) {
 	// process user configuration e.g. inputs
 	log.Printf("Inputs:")
 

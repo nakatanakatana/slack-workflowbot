@@ -17,16 +17,23 @@ type (
 
 type (
 	AppContext struct {
-		Slack                           *slack.Client
-		config                          configuration
-		workflowStep                    WorkflowStepFunc
-		workflowStepCallbackID          CallbackID
-		replyWithConfigurationView      ReplyWithConfigurationView
-		saveUserSettingsForWorkflowStep SaveUserSettingsForWorkflowStep
+		config        configuration
+		configureStep ConfigureStepContext
+		stepExecute   StepExecuteContext
 	}
 	configuration struct {
 		botToken      string
 		signingSecret string
+	}
+	StepExecuteContext struct {
+		SlackClient            SlackWorkflowStepExecuteClient
+		workflowStep           WorkflowStepFunc
+		workflowStepCallbackID CallbackID
+	}
+	ConfigureStepContext struct {
+		SlackClient                     SlackWorkfowConfigurationClient
+		replyWithConfigurationView      ReplyWithConfigurationView
+		saveUserSettingsForWorkflowStep SaveUserSettingsForWorkflowStep
 	}
 )
 
@@ -34,7 +41,7 @@ type (
 	Middleware = func(next http.Handler) http.Handler
 
 	SecretsVerifierMiddleware struct {
-		appCtx AppContext
+		appCtx configuration
 	}
 )
 
@@ -42,12 +49,11 @@ type (
 var _ http.Handler = &SecretsVerifierMiddleware{}
 
 type (
-	SlackWorkflowOpenView interface {
+	SlackWorkfowConfigurationClient interface {
 		OpenView(triggerID string,
 			view slack.ModalViewRequest,
 		) (*slack.ViewResponse, error)
-	}
-	SlackWorkflowSaveConfigration interface {
+
 		SaveWorkflowStepConfiguration(
 			workflowStepEditID string,
 			inputs *slack.WorkflowStepInputs,
@@ -55,26 +61,26 @@ type (
 		) error
 	}
 	// workflows.stepCompleted and workflows.stepFailed.
-	SlackWorkflowResultClient interface{}
+	SlackWorkflowStepExecuteClient interface{}
 )
 
 type (
 	ReplyWithConfigurationView = func(
-		appContext AppContext,
+		appContext ConfigureStepContext,
 		message slack.InteractionCallback,
 		privateMetadata string,
 		externalID string,
 	) error
 
 	SaveUserSettingsForWorkflowStep = func(
-		appContext AppContext,
+		appContext ConfigureStepContext,
 		message slack.InteractionCallback,
 	) error
 )
 
 type (
 	WorkflowStepFunc = func(
-		appContext AppContext,
+		appContext StepExecuteContext,
 		workflowStep slackevents.EventWorkflowStep,
 	)
 )

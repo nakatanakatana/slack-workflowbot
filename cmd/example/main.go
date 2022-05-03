@@ -28,6 +28,7 @@ func main() {
 		replyWithConfigurationView,
 		saveUserSettingsForWrokflowStep,
 	)
+
 	handleInteraction := slackworkflowbot.CreateHandleInteraction(appCtx)
 	handleMyWorkflowStep := slackworkflowbot.CreateHandleWorkflowStep(appCtx)
 

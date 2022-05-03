@@ -11,6 +11,8 @@ import (
 )
 
 func CreateHandleInteraction(appCtx AppContext) http.HandlerFunc {
+	configureStepCtx := appCtx.configureStep
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -44,7 +46,12 @@ func CreateHandleInteraction(appCtx AppContext) http.HandlerFunc {
 		switch message.Type {
 		case slack.InteractionTypeWorkflowStepEdit:
 			// https://api.slack.com/workflows/steps#handle_config_view
-			err := appCtx.replyWithConfigurationView(appCtx, message, "", "")
+			err := configureStepCtx.replyWithConfigurationView(
+				configureStepCtx,
+				message,
+				"",
+				"",
+			)
 			if err != nil {
 				log.Printf("[ERROR] Failed to open configuration modal in slack: %s", err.Error())
 			}
@@ -52,7 +59,7 @@ func CreateHandleInteraction(appCtx AppContext) http.HandlerFunc {
 		case slack.InteractionTypeViewSubmission:
 			// https://api.slack.com/workflows/steps#handle_view_submission
 			//nolint:errcheck
-			go appCtx.saveUserSettingsForWorkflowStep(appCtx, message)
+			go configureStepCtx.saveUserSettingsForWorkflowStep(configureStepCtx, message)
 			w.WriteHeader(http.StatusOK)
 
 		default:
