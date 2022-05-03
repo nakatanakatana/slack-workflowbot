@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"time"
 
 	slackworkflowbot "github.com/nakatanakatana/slack-workflowbot"
 	"github.com/slack-go/slack"
@@ -25,11 +27,33 @@ func saveUserSettingsForWrokflowStep(
 	inToken := slackworkflowbot.CreateTextWorkflowStepInput(blockAction, TokenActionID, TokenBlockID, true)
 
 	in := slackworkflowbot.MergeWorkflowStepInput(inEmail, inToken)
+	out := &[]slack.WorkflowStepOutput{
+		{
+			Name:  "created_at",
+			Type:  "text",
+			Label: "created_at",
+		},
+		{
+			Name:  "email",
+			Type:  "text",
+			Label: "email",
+		},
+		{
+			Name:  "reason",
+			Type:  "text",
+			Label: "reason",
+		},
+		{
+			Name:  "status",
+			Type:  "text",
+			Label: "status",
+		},
+	}
 
 	err := appCtx.SlackClient.SaveWorkflowStepConfiguration(
 		message.WorkflowStep.WorkflowStepEditID,
 		in,
-		nil,
+		out,
 	)
 
 	return fmt.Errorf("Slack.SaveWorkflowStepConfiguration Failed: %w", err)
@@ -62,7 +86,7 @@ func replyWithConfigurationView(
 }
 
 func doHeavyLoad(
-	_ slackworkflowbot.StepExecuteContext,
+	appCtx slackworkflowbot.StepExecuteContext,
 	workflowStep slackevents.EventWorkflowStep,
 ) {
 	// process user configuration e.g. inputs
@@ -71,6 +95,20 @@ func doHeavyLoad(
 	for name, input := range *workflowStep.Inputs {
 		log.Printf("%s: %s", name, input.Value)
 	}
+
+	out := map[string]string{}
+	out["created_at"] = time.Now().Format(time.RFC3339)
+	out["email"] = "nakatanakatana@gmail.com"
+	out["reason"] = "reason"
+	out["status"] = "123"
+
+	ctx := context.Background()
+	err := appCtx.SlackClient.WorkflowStepCompleted(
+		ctx,
+		workflowStep.WorkflowStepExecuteID,
+		&out,
+	)
+	log.Println("error:", err)
 
 	// do heavy load
 	// time.Sleep(1 * time.Second)

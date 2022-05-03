@@ -1,6 +1,9 @@
 package slackworkflowbot
 
-import "github.com/slack-go/slack"
+import (
+	slackdev "github.com/nakatanakatana/slack"
+	"github.com/slack-go/slack"
+)
 
 func CreateAppContext(
 	botToken BotToken,
@@ -15,8 +18,9 @@ func CreateAppContext(
 	appCtx.config.signingSecret = string(signingSecret)
 
 	slackClient := slack.New(appCtx.config.botToken)
+	slackdevClient := slackdev.New(appCtx.config.botToken)
 
-	appCtx.stepExecute.SlackClient = slackClient
+	appCtx.stepExecute.SlackClient = slackdevClient
 	appCtx.stepExecute.workflowStep = workflowStep
 	appCtx.stepExecute.workflowStepCallbackID = workflowStepCallbackID
 

@@ -1,6 +1,7 @@
 package slackworkflowbot
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/slack-go/slack"
@@ -50,7 +51,8 @@ var _ http.Handler = &SecretsVerifierMiddleware{}
 
 type (
 	SlackWorkfowConfigurationClient interface {
-		OpenView(triggerID string,
+		OpenView(
+			triggerID string,
 			view slack.ModalViewRequest,
 		) (*slack.ViewResponse, error)
 
@@ -60,20 +62,33 @@ type (
 			outputs *[]slack.WorkflowStepOutput,
 		) error
 	}
+
 	// workflows.stepCompleted and workflows.stepFailed.
-	SlackWorkflowStepExecuteClient interface{}
+	SlackWorkflowStepExecuteClient interface {
+		WorkflowStepCompleted(
+			ctx context.Context,
+			workflowStepExecuteID string,
+			outputs *map[string]string,
+		) error
+
+		WorkflowStepFailed(
+			ctx context.Context,
+			workflowStepExecuteID string,
+			errorMessage string,
+		) error
+	}
 )
 
 type (
 	ReplyWithConfigurationView = func(
-		appContext ConfigureStepContext,
+		appCctx ConfigureStepContext,
 		message slack.InteractionCallback,
 		privateMetadata string,
 		externalID string,
 	) error
 
 	SaveUserSettingsForWorkflowStep = func(
-		appContext ConfigureStepContext,
+		appCtx ConfigureStepContext,
 		message slack.InteractionCallback,
 	) error
 )
