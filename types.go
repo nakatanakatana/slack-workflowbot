@@ -38,7 +38,7 @@ type (
 	}
 )
 
-// var _ Middleware = &SecretsVerifierMiddleware{}
+// var _ Middleware = NewSecretsVerifierMiddleware(appCtx)
 var _ http.Handler = &SecretsVerifierMiddleware{}
 
 type (

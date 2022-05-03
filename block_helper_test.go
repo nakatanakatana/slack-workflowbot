@@ -48,7 +48,7 @@ func TestMergeWorkflowStepInput(t *testing.T) {
 	if value, ok := got[string(fooBlockID)]; !ok || value.Value != "foo" {
 		t.Fail()
 	}
-	if value, ok := got[string(barBlockID)]; !ok || value.Value != "bar"{
+	if value, ok := got[string(barBlockID)]; !ok || value.Value != "bar" {
 		t.Fail()
 	}
 }
