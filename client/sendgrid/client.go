@@ -43,5 +43,6 @@ func New(token string, options ...Option) *Client {
 	for _, o := range options {
 		o.Apply(cli)
 	}
+
 	return cli
 }

@@ -29,25 +29,32 @@ func createTestBlockActions() slackworkflowbot.BlockActionValues {
 }
 
 func TestCreateTextWorkflowStepInput(t *testing.T) {
+	t.Parallel()
+
 	blockActionValues := createTestBlockActions()
 
 	result := slackworkflowbot.CreateTextWorkflowStepInput(blockActionValues, fooActionID, fooBlockID, false)
 	got := *result
+
 	if _, ok := got[string(fooBlockID)]; !ok {
 		t.Fail()
 	}
 }
 
 func TestMergeWorkflowStepInput(t *testing.T) {
+	t.Parallel()
+
 	blockActionValues := createTestBlockActions()
 	resultFoo := slackworkflowbot.CreateTextWorkflowStepInput(blockActionValues, fooActionID, fooBlockID, false)
 	resultBar := slackworkflowbot.CreateTextWorkflowStepInput(blockActionValues, barActionID, barBlockID, false)
 
 	result := slackworkflowbot.MergeWorkflowStepInput(resultFoo, resultBar)
 	got := *result
+
 	if value, ok := got[string(fooBlockID)]; !ok || value.Value != "foo" {
 		t.Fail()
 	}
+
 	if value, ok := got[string(barBlockID)]; !ok || value.Value != "bar" {
 		t.Fail()
 	}

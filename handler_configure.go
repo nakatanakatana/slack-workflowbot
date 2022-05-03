@@ -2,7 +2,6 @@ package slackworkflowbot
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -15,18 +14,21 @@ func CreateHandleInteraction(appCtx AppContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
+
 			return
 		}
 
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
+
 			return
 		}
 
 		jsonStr, err := url.QueryUnescape(string(body)[8:])
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+
 			return
 		}
 
@@ -34,10 +36,11 @@ func CreateHandleInteraction(appCtx AppContext) http.HandlerFunc {
 		if err := json.Unmarshal([]byte(jsonStr), &message); err != nil {
 			log.Printf("[ERROR] Failed to decode json message from slack: %s", jsonStr)
 			w.WriteHeader(http.StatusInternalServerError)
+
 			return
 		}
-		fmt.Println("interaction", message.Type, string(body))
 
+		//nolint:exhaustive
 		switch message.Type {
 		case slack.InteractionTypeWorkflowStepEdit:
 			// https://api.slack.com/workflows/steps#handle_config_view
@@ -48,6 +51,7 @@ func CreateHandleInteraction(appCtx AppContext) http.HandlerFunc {
 
 		case slack.InteractionTypeViewSubmission:
 			// https://api.slack.com/workflows/steps#handle_view_submission
+			//nolint:errcheck
 			go appCtx.saveUserSettingsForWorkflowStep(appCtx, message)
 			w.WriteHeader(http.StatusOK)
 

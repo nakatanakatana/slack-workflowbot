@@ -16,22 +16,31 @@ const (
 	TokenBlockID  = slackworkflowbot.BlockID("token")
 )
 
-func saveUserSettingsForWrokflowStep(appCtx slackworkflowbot.AppContext, message slack.InteractionCallback) error {
+func saveUserSettingsForWrokflowStep(
+	appCtx slackworkflowbot.AppContext,
+	message slack.InteractionCallback,
+) error {
 	blockAction := message.View.State.Values
 	inEmail := slackworkflowbot.CreateTextWorkflowStepInput(blockAction, EmailActionID, EmailBlockID, false)
 	inToken := slackworkflowbot.CreateTextWorkflowStepInput(blockAction, TokenActionID, TokenBlockID, true)
 
 	in := slackworkflowbot.MergeWorkflowStepInput(inEmail, inToken)
 
-	appCtx.Slack.SaveWorkflowStepConfiguration(
+	err := appCtx.Slack.SaveWorkflowStepConfiguration(
 		message.WorkflowStep.WorkflowStepEditID,
 		in,
 		nil,
 	)
-	return nil
+
+	return fmt.Errorf("Slack.SaveWorkflowStepConfiguration Failed: %w", err)
 }
 
-func replyWithConfigurationView(appCtx slackworkflowbot.AppContext, message slack.InteractionCallback, privateMetaData string, externalID string) error {
+func replyWithConfigurationView(
+	appCtx slackworkflowbot.AppContext,
+	message slack.InteractionCallback,
+	privateMetaData string,
+	externalID string,
+) error {
 	emailInput := slackworkflowbot.CreateTextInputBlock(EmailActionID, EmailBlockID, "email", "", false, false)
 	tokenInput := slackworkflowbot.CreateTextInputBlock(TokenActionID, TokenBlockID, "token", "", false, false)
 
@@ -44,14 +53,16 @@ func replyWithConfigurationView(appCtx slackworkflowbot.AppContext, message slac
 
 	cmr := slack.NewConfigurationModalRequest(blocks, privateMetaData, externalID)
 	_, err := appCtx.Slack.OpenView(message.TriggerID, cmr.ModalViewRequest)
-	return err
+
+	return fmt.Errorf("NewConfigurationModalRequest Failed: %w", err)
 }
 
 func doHeavyLoad(_ slackworkflowbot.AppContext, workflowStep slackevents.EventWorkflowStep) {
 	// process user configuration e.g. inputs
 	log.Printf("Inputs:")
+
 	for name, input := range *workflowStep.Inputs {
-		log.Printf(fmt.Sprintf("%s: %s", name, input.Value))
+		log.Printf("%s: %s", name, input.Value)
 	}
 
 	// do heavy load

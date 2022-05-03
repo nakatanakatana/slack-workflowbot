@@ -1,6 +1,6 @@
 module github.com/nakatanakatana/slack-workflowbot
 
-go 1.18
+go 1.17
 
 require github.com/slack-go/slack v0.10.3
 

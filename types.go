@@ -38,17 +38,23 @@ type (
 	}
 )
 
-// var _ Middleware = NewSecretsVerifierMiddleware(appCtx)
+// var _ Middleware = NewSecretsVerifierMiddleware(appCtx).
 var _ http.Handler = &SecretsVerifierMiddleware{}
 
 type (
 	SlackWorkflowOpenView interface {
-		OpenView(triggerID string, view slack.ModalViewRequest) (*slack.ViewResponse, error)
+		OpenView(triggerID string,
+			view slack.ModalViewRequest,
+		) (*slack.ViewResponse, error)
 	}
 	SlackWorkflowSaveConfigration interface {
-		SaveWorkflowStepConfiguration(workflowStepEditID string, inputs *slack.WorkflowStepInputs, outputs *[]slack.WorkflowStepOutput) error
+		SaveWorkflowStepConfiguration(
+			workflowStepEditID string,
+			inputs *slack.WorkflowStepInputs,
+			outputs *[]slack.WorkflowStepOutput,
+		) error
 	}
-	// workflows.stepCompleted and workflows.stepFailed
+	// workflows.stepCompleted and workflows.stepFailed.
 	SlackWorkflowResultClient interface{}
 )
 
