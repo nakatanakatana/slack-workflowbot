@@ -15,4 +15,4 @@ FROM busybox
 COPY --from=builder /app/output /app
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-CMD ["/app/example"]
+CMD ["ls", "/app/example"]
