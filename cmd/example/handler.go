@@ -108,6 +108,11 @@ func doHeavyLoad(
 		workflowStep.WorkflowStepExecuteID,
 		&out,
 	)
+	// err := appCtx.SlackClient.WorkflowStepFailed(
+	// 	context.Background(),
+	// 	workflowStep.WorkflowStepExecuteID,
+	// 	"unknown error",
+	// )
 	log.Println("error:", err)
 
 	// do heavy load
