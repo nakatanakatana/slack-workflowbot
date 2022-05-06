@@ -8,10 +8,9 @@ import (
 func CreateAppContext(
 	botToken BotToken,
 	signingSecret SigningSecret,
-	workflowStep WorkflowStepFunc,
-	workflowStepCallbackID CallbackID,
-	replyWithConfigurationView ReplyWithConfigurationView,
-	saveUserSettingsForWorkflowStep SaveUserSettingsForWorkflowStep,
+	workflowStep map[CallbackID]WorkflowStepFunc,
+	configView map[CallbackID]ConfigView,
+	saveConfig map[CallbackID]SaveConfig,
 ) AppContext {
 	var appCtx AppContext
 	appCtx.config.botToken = string(botToken)
@@ -22,11 +21,10 @@ func CreateAppContext(
 
 	appCtx.stepExecute.SlackClient = slackdevClient
 	appCtx.stepExecute.workflowStep = workflowStep
-	appCtx.stepExecute.workflowStepCallbackID = workflowStepCallbackID
 
 	appCtx.configureStep.SlackClient = slackClient
-	appCtx.configureStep.replyWithConfigurationView = replyWithConfigurationView
-	appCtx.configureStep.saveUserSettingsForWorkflowStep = saveUserSettingsForWorkflowStep
+	appCtx.configureStep.configView = configView
+	appCtx.configureStep.saveConfig = saveConfig
 
 	return appCtx
 }

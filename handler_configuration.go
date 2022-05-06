@@ -10,7 +10,8 @@ import (
 	"github.com/slack-go/slack"
 )
 
-func CreateHandleInteraction(appCtx AppContext) http.HandlerFunc {
+//nolint:funlen,cyclop
+func CreateInteractionHandler(appCtx AppContext) http.HandlerFunc {
 	configureStepCtx := appCtx.configureStep
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -45,22 +46,29 @@ func CreateHandleInteraction(appCtx AppContext) http.HandlerFunc {
 		//nolint:exhaustive
 		switch message.Type {
 		case slack.InteractionTypeWorkflowStepEdit:
-			log.Println("callbackID", message.CallbackID)
 			// https://api.slack.com/workflows/steps#handle_config_view
-			err := configureStepCtx.replyWithConfigurationView(
-				configureStepCtx,
-				message,
-				"",
-				"",
-			)
+			configView, ok := configureStepCtx.configView[CallbackID(message.CallbackID)]
+			if !ok {
+				log.Printf("[WARN] unknown callback id: %s", message.CallbackID)
+
+				return
+			}
+
+			err := configView(configureStepCtx, message, "", "")
 			if err != nil {
 				log.Printf("[ERROR] Failed to open configuration modal in slack: %s", err.Error())
 			}
 
 		case slack.InteractionTypeViewSubmission:
 			// https://api.slack.com/workflows/steps#handle_view_submission
+			saveConfig, ok := configureStepCtx.saveConfig[CallbackID(message.CallbackID)]
+			if !ok {
+				log.Printf("[WARN] unknown callback id: %s", message.CallbackID)
+
+				return
+			}
 			//nolint:errcheck
-			go configureStepCtx.saveUserSettingsForWorkflowStep(configureStepCtx, message)
+			go saveConfig(configureStepCtx, message)
 			w.WriteHeader(http.StatusOK)
 
 		default:

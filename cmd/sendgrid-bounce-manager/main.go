@@ -6,40 +6,52 @@ import (
 	"net/http"
 	"os"
 
-	slackworkflowbot "github.com/nakatanakatana/slack-workflowbot"
+	bot "github.com/nakatanakatana/slack-workflowbot"
 	"github.com/nakatanakatana/slack-workflowbot/client/sendgrid"
 )
 
 const (
 	APIBaseURL = "/api/v1"
-	// MyExampleWorkflowStepCallbackID is configured in slack (api.slack.com/apps).
-	// Select your app or create a new one. Then choose menu "Workflow Steps"...
-	MyExampleWorkflowStepCallbackID = slackworkflowbot.CallbackID("example-step")
+
+	CheckBounceStep  = bot.CallbackID("check-bounce-step")
+	DeleteBounceStep = bot.CallbackID("delete-bounce-step")
 )
 
 func main() {
-	botToken := slackworkflowbot.BotToken(os.Getenv("SLACK_BOT_TOKEN"))
-	signingSecret := slackworkflowbot.SigningSecret(os.Getenv("SLACK_SIGNING_SECRET"))
+	botToken := bot.BotToken(os.Getenv("SLACK_BOT_TOKEN"))
+	signingSecret := bot.SigningSecret(os.Getenv("SLACK_SIGNING_SECRET"))
 	defaultSendGridClient := sendgrid.New()
 
-	workflowStep := createStepFunc(defaultSendGridClient)
+	workflowStep := map[bot.CallbackID]bot.WorkflowStepFunc{
+		CheckBounceStep:  createCheckStepFunc(defaultSendGridClient),
+		DeleteBounceStep: createDeleteStepFunc(defaultSendGridClient),
+	}
 
-	appCtx := slackworkflowbot.CreateAppContext(
+	configView := map[bot.CallbackID]bot.ConfigView{
+		CheckBounceStep:  createConfigView(),
+		DeleteBounceStep: createConfigView(),
+	}
+
+	saveConfig := map[bot.CallbackID]bot.SaveConfig{
+		CheckBounceStep:  saveStepConfig,
+		DeleteBounceStep: saveStepConfig,
+	}
+
+	appCtx := bot.CreateAppContext(
 		botToken,
 		signingSecret,
 		workflowStep,
-		MyExampleWorkflowStepCallbackID,
-		replyWithConfigurationView,
-		saveUserSettingsForWrokflowStep,
+		configView,
+		saveConfig,
 	)
 
-	handleInteraction := slackworkflowbot.CreateHandleInteraction(appCtx)
-	handleMyWorkflowStep := slackworkflowbot.CreateHandleEvents(appCtx)
+	handleInteraction := bot.CreateInteractionHandler(appCtx)
+	handleWorkflowStep := bot.CreateEventsHandler(appCtx)
 
 	mux := http.NewServeMux()
-	verifier := slackworkflowbot.NewSecretsVerifierMiddleware(appCtx)
+	verifier := bot.NewSecretsVerifierMiddleware(appCtx)
 	mux.Handle(fmt.Sprintf("%s/interaction", APIBaseURL), verifier(handleInteraction))
-	mux.Handle(fmt.Sprintf("%s/%s", APIBaseURL, MyExampleWorkflowStepCallbackID), verifier(handleMyWorkflowStep))
+	mux.Handle(fmt.Sprintf("%s/events", APIBaseURL), verifier(handleWorkflowStep))
 
 	log.Printf("starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))

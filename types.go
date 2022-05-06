@@ -27,14 +27,13 @@ type (
 		signingSecret string
 	}
 	StepExecuteContext struct {
-		SlackClient            SlackWorkflowStepExecuteClient
-		workflowStep           WorkflowStepFunc
-		workflowStepCallbackID CallbackID
+		SlackClient  SlackWorkflowStepExecuteClient
+		workflowStep map[CallbackID]WorkflowStepFunc
 	}
 	ConfigureStepContext struct {
-		SlackClient                     SlackWorkfowConfigurationClient
-		replyWithConfigurationView      ReplyWithConfigurationView
-		saveUserSettingsForWorkflowStep SaveUserSettingsForWorkflowStep
+		SlackClient SlackWorkfowConfigurationClient
+		configView  map[CallbackID]ConfigView
+		saveConfig  map[CallbackID]SaveConfig
 	}
 )
 
@@ -80,14 +79,14 @@ type (
 )
 
 type (
-	ReplyWithConfigurationView = func(
+	ConfigView = func(
 		appCctx ConfigureStepContext,
 		message slack.InteractionCallback,
 		privateMetadata string,
 		externalID string,
 	) error
 
-	SaveUserSettingsForWorkflowStep = func(
+	SaveConfig = func(
 		appCtx ConfigureStepContext,
 		message slack.InteractionCallback,
 	) error
