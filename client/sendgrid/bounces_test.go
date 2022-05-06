@@ -65,7 +65,7 @@ func TestDeleteBounce(t *testing.T) {
 	t.Run("delete success", func(t *testing.T) {
 		t.Parallel()
 
-		cli := sendgrid.New("", sendgrid.API(bounceDeleteSuccess))
+		cli := sendgrid.New(sendgrid.API(bounceDeleteSuccess))
 		_, _, err := cli.DeleteBounce("nakatanakatana@gmail.com")
 		if err != nil {
 			t.Fail()
@@ -75,7 +75,7 @@ func TestDeleteBounce(t *testing.T) {
 	t.Run("delete not found", func(t *testing.T) {
 		t.Parallel()
 
-		cli := sendgrid.New("", sendgrid.API(bounceDeleteNotFound))
+		cli := sendgrid.New(sendgrid.API(bounceDeleteNotFound))
 
 		_, _, err := cli.DeleteBounce("nakatanakatana@gmail.com")
 		if !errors.Is(err, sendgrid.ErrNotFound) {
@@ -86,7 +86,7 @@ func TestDeleteBounce(t *testing.T) {
 	t.Run("get success", func(t *testing.T) {
 		t.Parallel()
 
-		cli := sendgrid.New("", sendgrid.API(bounceGetSuccess))
+		cli := sendgrid.New(sendgrid.API(bounceGetSuccess))
 		result, _, err := cli.GetBounce("nakatanakatana@gmail.com")
 		if err != nil {
 			t.Fail()
@@ -105,7 +105,7 @@ func TestDeleteBounce(t *testing.T) {
 	t.Run("get not found", func(t *testing.T) {
 		t.Parallel()
 
-		cli := sendgrid.New("", sendgrid.API(bounceGetNotFound))
+		cli := sendgrid.New(sendgrid.API(bounceGetNotFound))
 		_, _, err := cli.GetBounce("nakatanakatana@gmail.com")
 		if !errors.Is(err, sendgrid.ErrNotFound) {
 			t.Fail()

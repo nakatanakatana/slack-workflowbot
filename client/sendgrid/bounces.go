@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/sendgrid/rest"
-	lib "github.com/sendgrid/sendgrid-go"
 )
 
 type GetBounceResult struct {
@@ -21,15 +20,17 @@ type GetBounceResult struct {
 type DeleteBounceResult struct{}
 
 type BounceManager interface {
-	GetBounce(email string) (*GetBounceResult, *rest.Response, error)
+	GetBounce(email string, options ...Option) (*GetBounceResult, *rest.Response, error)
+	DeleteBounce(email string, options ...Option) (*DeleteBounceResult, *rest.Response, error)
 }
 
-func (cli *Client) GetBounce(email string) (*GetBounceResult, *rest.Response, error) {
+var _ BounceManager = &Client{}
+
+func (cli *Client) GetBounce(email string, options ...Option) (*GetBounceResult, *rest.Response, error) {
 	// https://docs.sendgrid.com/api-reference/bounces-api/retrieve-a-bounce
-	request := lib.GetRequest(
-		cli.apiKey,
+	request := cli.GetRequest(
 		fmt.Sprintf("/v3/suppression/bounces/%s", email),
-		cli.host,
+		options...,
 	)
 	request.Method = "GET"
 
@@ -59,12 +60,11 @@ func (cli *Client) GetBounce(email string) (*GetBounceResult, *rest.Response, er
 	return &result, response, nil
 }
 
-func (cli *Client) DeleteBounce(email string) (*DeleteBounceResult, *rest.Response, error) {
+func (cli *Client) DeleteBounce(email string, options ...Option) (*DeleteBounceResult, *rest.Response, error) {
 	// https://docs.sendgrid.com/api-reference/bounces-api/delete-a-bounce
-	request := lib.GetRequest(
-		cli.apiKey,
+	request := cli.GetRequest(
 		fmt.Sprintf("/v3/suppression/bounces/%s", email),
-		cli.host,
+		options...,
 	)
 	request.Method = "DELETE"
 

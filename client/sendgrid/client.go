@@ -22,6 +22,12 @@ type Option interface {
 	Apply(*Client)
 }
 
+type APIKey string
+
+func (a APIKey) Apply(c *Client) {
+	c.apiKey = string(a)
+}
+
 type Host string
 
 func (h Host) Apply(c *Client) {
@@ -34,9 +40,9 @@ func (a API) Apply(c *Client) {
 	c.api = a
 }
 
-func New(token string, options ...Option) *Client {
+func New(options ...Option) *Client {
 	cli := &Client{
-		token,
+		"",
 		"https://api.sendgrid.com",
 		lib.API,
 	}
@@ -45,4 +51,23 @@ func New(token string, options ...Option) *Client {
 	}
 
 	return cli
+}
+
+func (cli *Client) GetRequest(endpoint string, options ...Option) rest.Request {
+	config := &Client{}
+	for _, o := range options {
+		o.Apply(config)
+	}
+
+	apiKey := config.apiKey
+	if apiKey == "" {
+		apiKey = cli.apiKey
+	}
+
+	host := config.host
+	if host == "" {
+		host = cli.host
+	}
+
+	return lib.GetRequest(apiKey, endpoint, host)
 }
