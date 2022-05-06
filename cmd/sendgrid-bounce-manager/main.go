@@ -7,6 +7,7 @@ import (
 	"os"
 
 	slackworkflowbot "github.com/nakatanakatana/slack-workflowbot"
+	"github.com/nakatanakatana/slack-workflowbot/client/sendgrid"
 )
 
 const (
@@ -19,18 +20,21 @@ const (
 func main() {
 	botToken := slackworkflowbot.BotToken(os.Getenv("SLACK_BOT_TOKEN"))
 	signingSecret := slackworkflowbot.SigningSecret(os.Getenv("SLACK_SIGNING_SECRET"))
+	defaultSendGridClient := sendgrid.New()
+
+	workflowStep := createStepFunc(defaultSendGridClient)
 
 	appCtx := slackworkflowbot.CreateAppContext(
 		botToken,
 		signingSecret,
-		doHeavyLoad,
+		workflowStep,
 		MyExampleWorkflowStepCallbackID,
 		replyWithConfigurationView,
 		saveUserSettingsForWrokflowStep,
 	)
 
 	handleInteraction := slackworkflowbot.CreateHandleInteraction(appCtx)
-	handleMyWorkflowStep := slackworkflowbot.CreateHandleWorkflowStep(appCtx)
+	handleMyWorkflowStep := slackworkflowbot.CreateHandleEvents(appCtx)
 
 	mux := http.NewServeMux()
 	verifier := slackworkflowbot.NewSecretsVerifierMiddleware(appCtx)

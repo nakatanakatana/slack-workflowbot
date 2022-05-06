@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
 
 	slackworkflowbot "github.com/nakatanakatana/slack-workflowbot"
+	"github.com/nakatanakatana/slack-workflowbot/client/sendgrid"
+
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 )
@@ -28,6 +31,11 @@ func saveUserSettingsForWrokflowStep(
 
 	in := slackworkflowbot.MergeWorkflowStepInput(inEmail, inToken)
 	out := &[]slack.WorkflowStepOutput{
+		{
+			Name:  "message",
+			Type:  "text",
+			Label: "message",
+		},
 		{
 			Name:  "created_at",
 			Type:  "text",
@@ -85,37 +93,71 @@ func replyWithConfigurationView(
 	return nil
 }
 
-func doHeavyLoad(
-	appCtx slackworkflowbot.StepExecuteContext,
-	workflowStep slackevents.EventWorkflowStep,
-) {
-	// process user configuration e.g. inputs
-	log.Printf("Inputs:")
+func createStepFunc(sg sendgrid.BounceManager) slackworkflowbot.WorkflowStepFunc {
+	return func(
+		appCtx slackworkflowbot.StepExecuteContext,
+		workflowStep slackevents.EventWorkflowStep,
+	) {
+		// // process user configuration e.g. inputs
+		// log.Printf("Inputs:")
+		//
+		// for name, input := range *workflowStep.Inputs {
+		// 	log.Printf("%s: %s", name, input.Value)
+		// }
+		ctx := context.Background()
+		inputs := *workflowStep.Inputs
 
-	for name, input := range *workflowStep.Inputs {
-		log.Printf("%s: %s", name, input.Value)
+		email, ok := inputs[string(EmailBlockID)]
+		if !ok || email.Value == "" {
+			message := string(EmailBlockID) + " is required"
+			log.Println("", message)
+			_ = appCtx.SlackClient.WorkflowStepFailed(
+				ctx,
+				workflowStep.WorkflowStepExecuteID,
+				message,
+			)
+		}
+
+		token, ok := inputs[string(TokenBlockID)]
+		if !ok || token.Value == "" {
+			message := string(TokenBlockID) + " is required"
+			log.Println("", message)
+			_ = appCtx.SlackClient.WorkflowStepFailed(
+				ctx,
+				workflowStep.WorkflowStepExecuteID,
+				message,
+			)
+		}
+
+		out := map[string]string{}
+
+		result, resp, err := sg.GetBounce(email.Value, sendgrid.APIKey(token.Value))
+
+		switch {
+		case errors.Is(err, sendgrid.ErrNotFound):
+			out["message"] = "not found"
+		case err != nil:
+			out["message"] = "unexpected error"
+
+			log.Println("get bounce error:", err)
+			log.Println("response:", resp)
+		default:
+			out["message"] = "hit"
+			out["created_at"] = result.CreatedAt.Format(time.RFC3339)
+			out["email"] = result.Email
+			out["reason"] = result.Reason
+			out["status"] = result.Status
+		}
+
+		err = appCtx.SlackClient.WorkflowStepCompleted(
+			ctx,
+			workflowStep.WorkflowStepExecuteID,
+			&out,
+		)
+		if err != nil {
+			log.Println("workflow step completed error:", err)
+		}
+
+		log.Println("Done")
 	}
-
-	out := map[string]string{}
-	out["created_at"] = time.Now().Format(time.RFC3339)
-	out["email"] = "nakatanakatana@gmail.com"
-	out["reason"] = "reason"
-	out["status"] = "123"
-
-	ctx := context.Background()
-	err := appCtx.SlackClient.WorkflowStepCompleted(
-		ctx,
-		workflowStep.WorkflowStepExecuteID,
-		&out,
-	)
-	// err := appCtx.SlackClient.WorkflowStepFailed(
-	// 	context.Background(),
-	// 	workflowStep.WorkflowStepExecuteID,
-	// 	"unknown error",
-	// )
-	log.Println("error:", err)
-
-	// do heavy load
-	// time.Sleep(1 * time.Second)
-	log.Println("Done")
 }

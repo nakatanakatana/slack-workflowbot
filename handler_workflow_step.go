@@ -10,7 +10,7 @@ import (
 )
 
 //nolint:funlen
-func CreateHandleWorkflowStep(appCtx AppContext) http.HandlerFunc {
+func CreateHandleEvents(appCtx AppContext) http.HandlerFunc {
 	stepExecuteCtx := appCtx.stepExecute
 
 	return func(w http.ResponseWriter, r *http.Request) {

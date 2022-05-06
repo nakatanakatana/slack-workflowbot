@@ -45,6 +45,7 @@ func CreateHandleInteraction(appCtx AppContext) http.HandlerFunc {
 		//nolint:exhaustive
 		switch message.Type {
 		case slack.InteractionTypeWorkflowStepEdit:
+			log.Println("callbackID", message.CallbackID)
 			// https://api.slack.com/workflows/steps#handle_config_view
 			err := configureStepCtx.replyWithConfigurationView(
 				configureStepCtx,
