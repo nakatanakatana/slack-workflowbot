@@ -20,35 +20,29 @@ func main() {
 	botToken := bot.BotToken(os.Getenv("SLACK_BOT_TOKEN"))
 	signingSecret := bot.SigningSecret(os.Getenv("SLACK_SIGNING_SECRET"))
 	defaultSendGridClient := sendgrid.New()
+	slackClient := bot.CreateSlackClient(botToken)
+	slackDevClient := bot.CreateSlackDevClient(botToken)
 
-	workflowStep := map[bot.CallbackID]bot.WorkflowStepFunc{
-		checker.CallbackID: checker.CreateStepFunc(defaultSendGridClient),
-		deleter.CallbackID: deleter.CreateStepFunc(defaultSendGridClient),
+	configView := bot.ConfigViewFunctions{
+		checker.CallbackID: checker.CreateConfigView(slackClient),
+		deleter.CallbackID: deleter.CreateConfigView(slackClient),
 	}
 
-	configView := map[bot.CallbackID]bot.ConfigView{
-		checker.CallbackID: checker.CreateConfigView(),
-		deleter.CallbackID: deleter.CreateConfigView(),
+	saveConfig := bot.SaveConfigFunctions{
+		checker.CallbackID: checker.CreateSaveStepConfig(slackClient),
+		deleter.CallbackID: deleter.CreateSaveStepConfig(slackClient),
 	}
 
-	saveConfig := map[bot.CallbackID]bot.SaveConfig{
-		checker.CallbackID: checker.SaveStepConfig,
-		deleter.CallbackID: deleter.SaveStepConfig,
+	workflowStep := bot.WorkflowStepFunctions{
+		checker.CallbackID: checker.CreateStepFunc(slackDevClient, defaultSendGridClient),
+		deleter.CallbackID: deleter.CreateStepFunc(slackDevClient, defaultSendGridClient),
 	}
 
-	appCtx := bot.CreateAppContext(
-		botToken,
-		signingSecret,
-		workflowStep,
-		configView,
-		saveConfig,
-	)
-
-	handleInteraction := bot.CreateInteractionHandler(appCtx)
-	handleWorkflowStep := bot.CreateEventsHandler(appCtx)
+	handleInteraction := bot.CreateInteractionHandler(configView, saveConfig)
+	handleWorkflowStep := bot.CreateEventsHandler(workflowStep)
 
 	mux := http.NewServeMux()
-	verifier := bot.NewSecretsVerifierMiddleware(appCtx)
+	verifier := bot.NewSecretsVerifierMiddleware(signingSecret)
 	mux.Handle(fmt.Sprintf("%s/interaction", APIBaseURL), verifier(handleInteraction))
 	mux.Handle(fmt.Sprintf("%s/events", APIBaseURL), verifier(handleWorkflowStep))
 

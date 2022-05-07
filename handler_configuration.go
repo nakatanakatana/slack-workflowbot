@@ -11,9 +11,10 @@ import (
 )
 
 //nolint:funlen,cyclop
-func CreateInteractionHandler(appCtx AppContext) http.HandlerFunc {
-	configureStepCtx := appCtx.configureStep
-
+func CreateInteractionHandler(
+	configView ConfigViewFunctions,
+	saveConfig SaveConfigFunctions,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -49,14 +50,14 @@ func CreateInteractionHandler(appCtx AppContext) http.HandlerFunc {
 			// https://api.slack.com/workflows/steps#handle_config_view
 			callbackID := CallbackID(message.CallbackID)
 
-			configView, ok := configureStepCtx.configView[callbackID]
+			configView, ok := configView[callbackID]
 			if !ok {
 				log.Printf("[WARN] create view failed. unknown callback id: %s", string(callbackID))
 
 				return
 			}
 
-			err := configView(configureStepCtx, message, "", "")
+			err := configView(message, "", "")
 			if err != nil {
 				log.Printf("[ERROR] Failed to open configuration modal in slack: %s", err.Error())
 			}
@@ -65,14 +66,14 @@ func CreateInteractionHandler(appCtx AppContext) http.HandlerFunc {
 			// https://api.slack.com/workflows/steps#handle_view_submission
 			callbackID := CallbackID(message.View.CallbackID)
 
-			saveConfig, ok := configureStepCtx.saveConfig[callbackID]
+			saveConfig, ok := saveConfig[callbackID]
 			if !ok {
 				log.Printf("[WARN] submission failed. unknown callback id: %s", string(callbackID))
 
 				return
 			}
 			//nolint:errcheck
-			go saveConfig(configureStepCtx, message)
+			go saveConfig(message)
 			w.WriteHeader(http.StatusOK)
 
 		default:

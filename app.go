@@ -5,26 +5,10 @@ import (
 	"github.com/slack-go/slack"
 )
 
-func CreateAppContext(
-	botToken BotToken,
-	signingSecret SigningSecret,
-	workflowStep map[CallbackID]WorkflowStepFunc,
-	configView map[CallbackID]ConfigView,
-	saveConfig map[CallbackID]SaveConfig,
-) AppContext {
-	var appCtx AppContext
-	appCtx.config.botToken = string(botToken)
-	appCtx.config.signingSecret = string(signingSecret)
+func CreateSlackClient(b BotToken) *slack.Client {
+	return slack.New(string(b))
+}
 
-	slackClient := slack.New(appCtx.config.botToken)
-	slackdevClient := slackdev.New(appCtx.config.botToken)
-
-	appCtx.stepExecute.SlackClient = slackdevClient
-	appCtx.stepExecute.workflowStep = workflowStep
-
-	appCtx.configureStep.SlackClient = slackClient
-	appCtx.configureStep.configView = configView
-	appCtx.configureStep.saveConfig = saveConfig
-
-	return appCtx
+func CreateSlackDevClient(b BotToken) *slackdev.Client {
+	return slackdev.New(string(b))
 }

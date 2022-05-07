@@ -101,9 +101,8 @@ var (
 	}
 )
 
-func CreateConfigView() bot.ConfigView {
+func CreateConfigView(cli bot.SlackWorkflowConfigurationClient) bot.ConfigView {
 	return func(
-		appCtx bot.ConfigureStepContext,
 		message slack.InteractionCallback,
 		privateMetaData string,
 		externalID string,
@@ -126,7 +125,7 @@ func CreateConfigView() bot.ConfigView {
 			ExternalID:      externalID,
 		}
 
-		_, err := appCtx.SlackClient.OpenView(message.TriggerID, mv)
+		_, err := cli.OpenView(message.TriggerID, mv)
 		if err != nil {
 			return fmt.Errorf("NewConfigurationModalRequest Failed: %w", err)
 		}
@@ -135,26 +134,26 @@ func CreateConfigView() bot.ConfigView {
 	}
 }
 
-func SaveStepConfig(
-	appCtx bot.ConfigureStepContext,
-	message slack.InteractionCallback,
-) error {
-	blockAction := message.View.State.Values
-	in := bot.CreateInputsConfig(blockAction, StepInputConfig)
-	out := bot.CreateOutputsConfig(StepOutputConfig)
+func CreateSaveStepConfig(cli bot.SlackWorkflowConfigurationClient) bot.SaveConfig {
+	return func(
+		message slack.InteractionCallback,
+	) error {
+		blockAction := message.View.State.Values
+		in := bot.CreateInputsConfig(blockAction, StepInputConfig)
+		out := bot.CreateOutputsConfig(StepOutputConfig)
 
-	err := appCtx.SlackClient.SaveWorkflowStepConfiguration(
-		message.WorkflowStep.WorkflowStepEditID,
-		in,
-		out,
-	)
+		err := cli.SaveWorkflowStepConfiguration(
+			message.WorkflowStep.WorkflowStepEditID,
+			in,
+			out,
+		)
 
-	return fmt.Errorf("Slack.SaveWorkflowStepConfiguration Failed: %w", err)
+		return fmt.Errorf("Slack.SaveWorkflowStepConfiguration Failed: %w", err)
+	}
 }
 
-func CreateStepFunc(sg sendgrid.BounceManager) bot.WorkflowStepFunc {
+func CreateStepFunc(cli bot.SlackWorkflowStepExecuteClient, sg sendgrid.BounceManager) bot.WorkflowStep {
 	return func(
-		appCtx bot.StepExecuteContext,
 		workflowStep slackevents.EventWorkflowStep,
 	) {
 		ctx := context.Background()
@@ -163,7 +162,7 @@ func CreateStepFunc(sg sendgrid.BounceManager) bot.WorkflowStepFunc {
 		email, ok := inputs[string(EmailBlockID)]
 		if !ok || email.Value == "" {
 			message := string(EmailBlockID) + " is required"
-			_ = appCtx.SlackClient.WorkflowStepFailed(
+			_ = cli.WorkflowStepFailed(
 				ctx,
 				workflowStep.WorkflowStepExecuteID,
 				message,
@@ -173,7 +172,7 @@ func CreateStepFunc(sg sendgrid.BounceManager) bot.WorkflowStepFunc {
 		token, ok := inputs[string(TokenBlockID)]
 		if !ok || token.Value == "" {
 			message := string(TokenBlockID) + " is required"
-			_ = appCtx.SlackClient.WorkflowStepFailed(
+			_ = cli.WorkflowStepFailed(
 				ctx,
 				workflowStep.WorkflowStepExecuteID,
 				message,
@@ -201,7 +200,7 @@ func CreateStepFunc(sg sendgrid.BounceManager) bot.WorkflowStepFunc {
 			bot.SetOutputValue(out, StatusOutputKey, result.Status)
 		}
 
-		err = appCtx.SlackClient.WorkflowStepCompleted(
+		err = cli.WorkflowStepCompleted(
 			ctx,
 			workflowStep.WorkflowStepExecuteID,
 			&out,

@@ -10,9 +10,9 @@ import (
 )
 
 //nolint:funlen
-func CreateEventsHandler(appCtx AppContext) http.HandlerFunc {
-	stepExecuteCtx := appCtx.stepExecute
-
+func CreateEventsHandler(
+	workflowStep WorkflowStepFunctions,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -60,7 +60,7 @@ func CreateEventsHandler(appCtx AppContext) http.HandlerFunc {
 			switch ev := innerEvent.Data.(type) {
 			// see: https://api.slack.com/events/workflow_step_execute
 			case *slackevents.WorkflowStepExecuteEvent:
-				callbackFunc, ok := stepExecuteCtx.workflowStep[CallbackID(ev.CallbackID)]
+				callbackFunc, ok := workflowStep[CallbackID(ev.CallbackID)]
 				if !ok {
 					log.Printf("[WARN] unknown callbackID: %s", ev.CallbackID)
 					w.WriteHeader(http.StatusBadRequest)
@@ -68,7 +68,7 @@ func CreateEventsHandler(appCtx AppContext) http.HandlerFunc {
 					return
 				}
 
-				go callbackFunc(stepExecuteCtx, ev.WorkflowStep)
+				go callbackFunc(ev.WorkflowStep)
 				w.WriteHeader(http.StatusOK)
 
 				return

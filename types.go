@@ -20,7 +20,7 @@ type (
 	Middleware = func(next http.Handler) http.Handler
 
 	SecretsVerifierMiddleware struct {
-		appCtx configuration
+		signingSecret SigningSecret
 	}
 )
 
@@ -28,7 +28,7 @@ type (
 var _ http.Handler = &SecretsVerifierMiddleware{}
 
 type (
-	SlackWorkfowConfigurationClient interface {
+	SlackWorkflowConfigurationClient interface {
 		OpenView(
 			triggerID string,
 			view slack.ModalViewRequest,
@@ -59,39 +59,19 @@ type (
 
 type (
 	ConfigView = func(
-		appCtx ConfigureStepContext,
 		message slack.InteractionCallback,
 		privateMetadata string,
 		externalID string,
 	) error
+	ConfigViewFunctions map[CallbackID]ConfigView
 
 	SaveConfig = func(
-		appCtx ConfigureStepContext,
 		message slack.InteractionCallback,
 	) error
-	WorkflowStepFunc = func(
-		appContext StepExecuteContext,
+	SaveConfigFunctions map[CallbackID]SaveConfig
+
+	WorkflowStep = func(
 		workflowStep slackevents.EventWorkflowStep,
 	)
-)
-
-type (
-	AppContext struct {
-		config        configuration
-		configureStep ConfigureStepContext
-		stepExecute   StepExecuteContext
-	}
-	configuration struct {
-		botToken      string
-		signingSecret string
-	}
-	StepExecuteContext struct {
-		SlackClient  SlackWorkflowStepExecuteClient
-		workflowStep map[CallbackID]WorkflowStepFunc
-	}
-	ConfigureStepContext struct {
-		SlackClient SlackWorkfowConfigurationClient
-		configView  map[CallbackID]ConfigView
-		saveConfig  map[CallbackID]SaveConfig
-	}
+	WorkflowStepFunctions map[CallbackID]WorkflowStep
 )

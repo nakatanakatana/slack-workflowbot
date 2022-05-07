@@ -20,7 +20,7 @@ func (v *SecretsVerifierMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Req
 	r.Body.Close()
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
-	sv, err := slack.NewSecretsVerifier(r.Header, v.appCtx.signingSecret)
+	sv, err := slack.NewSecretsVerifier(r.Header, string(v.signingSecret))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 
@@ -40,10 +40,8 @@ func (v *SecretsVerifierMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 }
 
-func NewSecretsVerifierMiddleware(appCtx AppContext) Middleware {
-	secretsVerifier := &SecretsVerifierMiddleware{
-		appCtx.config,
-	}
+func NewSecretsVerifierMiddleware(secret SigningSecret) Middleware {
+	secretsVerifier := &SecretsVerifierMiddleware{secret}
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
