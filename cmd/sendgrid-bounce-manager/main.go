@@ -8,13 +8,12 @@ import (
 
 	bot "github.com/nakatanakatana/slack-workflowbot"
 	"github.com/nakatanakatana/slack-workflowbot/client/sendgrid"
+	"github.com/nakatanakatana/slack-workflowbot/cmd/sendgrid-bounce-manager/checker"
+	"github.com/nakatanakatana/slack-workflowbot/cmd/sendgrid-bounce-manager/deleter"
 )
 
 const (
 	APIBaseURL = "/api/v1"
-
-	CheckBounceStep  = bot.CallbackID("check-bounce-step")
-	DeleteBounceStep = bot.CallbackID("delete-bounce-step")
 )
 
 func main() {
@@ -23,18 +22,18 @@ func main() {
 	defaultSendGridClient := sendgrid.New()
 
 	workflowStep := map[bot.CallbackID]bot.WorkflowStepFunc{
-		CheckBounceStep:  createCheckStepFunc(defaultSendGridClient),
-		DeleteBounceStep: createDeleteStepFunc(defaultSendGridClient),
+		checker.CallbackID: checker.CreateStepFunc(defaultSendGridClient),
+		deleter.CallbackID: deleter.CreateStepFunc(defaultSendGridClient),
 	}
 
 	configView := map[bot.CallbackID]bot.ConfigView{
-		CheckBounceStep:  createConfigView(),
-		DeleteBounceStep: createConfigView(),
+		checker.CallbackID: checker.CreateConfigView(),
+		deleter.CallbackID: deleter.CreateConfigView(),
 	}
 
 	saveConfig := map[bot.CallbackID]bot.SaveConfig{
-		CheckBounceStep:  saveStepConfig,
-		DeleteBounceStep: saveStepConfig,
+		checker.CallbackID: checker.SaveStepConfig,
+		deleter.CallbackID: deleter.SaveStepConfig,
 	}
 
 	appCtx := bot.CreateAppContext(

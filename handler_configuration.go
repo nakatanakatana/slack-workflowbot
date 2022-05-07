@@ -47,9 +47,11 @@ func CreateInteractionHandler(appCtx AppContext) http.HandlerFunc {
 		switch message.Type {
 		case slack.InteractionTypeWorkflowStepEdit:
 			// https://api.slack.com/workflows/steps#handle_config_view
-			configView, ok := configureStepCtx.configView[CallbackID(message.CallbackID)]
+			callbackID := CallbackID(message.CallbackID)
+
+			configView, ok := configureStepCtx.configView[callbackID]
 			if !ok {
-				log.Printf("[WARN] unknown callback id: %s", message.CallbackID)
+				log.Printf("[WARN] create view failed. unknown callback id: %s", string(callbackID))
 
 				return
 			}
@@ -61,9 +63,11 @@ func CreateInteractionHandler(appCtx AppContext) http.HandlerFunc {
 
 		case slack.InteractionTypeViewSubmission:
 			// https://api.slack.com/workflows/steps#handle_view_submission
-			saveConfig, ok := configureStepCtx.saveConfig[CallbackID(message.CallbackID)]
+			callbackID := CallbackID(message.View.CallbackID)
+
+			saveConfig, ok := configureStepCtx.saveConfig[callbackID]
 			if !ok {
-				log.Printf("[WARN] unknown callback id: %s", message.CallbackID)
+				log.Printf("[WARN] submission failed. unknown callback id: %s", string(callbackID))
 
 				return
 			}

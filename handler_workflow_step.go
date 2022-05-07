@@ -64,6 +64,7 @@ func CreateEventsHandler(appCtx AppContext) http.HandlerFunc {
 				if !ok {
 					log.Printf("[WARN] unknown callbackID: %s", ev.CallbackID)
 					w.WriteHeader(http.StatusBadRequest)
+
 					return
 				}
 
