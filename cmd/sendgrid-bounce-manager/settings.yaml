@@ -1,0 +1,27 @@
+display_information:
+  name: Send Grid Bounce Manager
+features:
+  bot_user:
+    display_name: Send Grid Bounce Manager
+    always_online: false
+  workflow_steps:
+    - name: Delete SendGrid Bounce
+      callback_id: delete-bounce-step
+    - name: Check SendGrid Bounce
+      callback_id: check-bounce-step
+oauth_config:
+  scopes:
+    bot:
+      - workflow.steps:execute
+settings:
+  event_subscriptions:
+    request_url: https://<your-app-host>/api/v1/events
+    bot_events:
+      - workflow_step_execute
+  interactivity:
+    is_enabled: true
+    request_url: https://<your-app-host>/api/v1/interaction
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false
+
