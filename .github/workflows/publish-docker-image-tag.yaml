@@ -8,7 +8,7 @@ on:
       - 'v*'
 
 env:
-  IMAGE_NAME: ff
+  IMAGE_NAME: slack-workflowbot
 
 jobs:
   push_to_registry:

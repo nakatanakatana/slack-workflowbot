@@ -93,7 +93,7 @@ func TestDeleteBounce(t *testing.T) {
 		}
 		if result.Created != 1443651125 ||
 			!result.CreatedAt.Equal(
-				time.Date(2015, time.October, 1, 7, 12, 5, 0, time.Local),
+				time.Date(2015, time.September, 30, 22, 12, 5, 0, time.UTC),
 			) ||
 			result.Email != "bounce1@test.com" ||
 			!strings.HasPrefix(result.Reason, "550 5.1.1 The email account that you") ||
