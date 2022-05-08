@@ -31,6 +31,18 @@ func (c StepInputConfigText) Type() slack.InputType {
 	return slack.InputTypeText
 }
 
+type StepInputConfigCheckbox struct {
+	Description             string
+	Options                 []string
+	Emoji                   bool
+	Verbatim                bool
+	SkipVariableReplacement bool
+}
+
+func (c StepInputConfigCheckbox) Type() slack.InputType {
+	return slack.InputTypeText
+}
+
 func CreateInputsConfig(blockAction BlockActionValues, inputs StepInputs) *slack.WorkflowStepInputs {
 	in := make([]*slack.WorkflowStepInputs, len(inputs))
 	i := 0
@@ -38,6 +50,15 @@ func CreateInputsConfig(blockAction BlockActionValues, inputs StepInputs) *slack
 	for _, value := range inputs {
 		switch cfg := value.Config.(type) {
 		case StepInputConfigText:
+			in[i] = CreateTextWorkflowStepInput(
+				blockAction,
+				value.ActionID,
+				value.BlockID,
+				cfg.SkipVariableReplacement,
+			)
+			i++
+
+		case StepInputConfigCheckbox:
 			in[i] = CreateTextWorkflowStepInput(
 				blockAction,
 				value.ActionID,
@@ -65,6 +86,16 @@ func CreateInputsBlock(inputs StepInputs) map[StepInputConfigKey]*slack.InputBlo
 				value.BlockID,
 				cfg.Name,
 				cfg.Placeholder,
+				cfg.Emoji,
+				cfg.Verbatim,
+			)
+
+		case StepInputConfigCheckbox:
+			results[key] = CreateCheckboxBlock(
+				value.ActionID,
+				value.BlockID,
+				cfg.Description,
+				cfg.Options,
 				cfg.Emoji,
 				cfg.Verbatim,
 			)
