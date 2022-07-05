@@ -38,7 +38,7 @@ func CreateTextInputBlock(
 	}
 
 	textElement := slack.NewPlainTextInputBlockElement(placeholderBlock, string(aID))
-	textInput := slack.NewInputBlock(string(bID), text, textElement)
+	textInput := slack.NewInputBlock(string(bID), text, nil, textElement)
 
 	return textInput
 }
@@ -74,7 +74,7 @@ func CreateCheckboxBlock(
 
 	checkboxOptionsBlock := slack.NewCheckboxGroupsBlockElement(string(aID), checkboxOptions...)
 
-	return slack.NewInputBlock(string(bID), descriptionBlock, checkboxOptionsBlock)
+	return slack.NewInputBlock(string(bID), descriptionBlock, nil, checkboxOptionsBlock)
 }
 
 func CreateCheckboxWorkflowStepInput(
