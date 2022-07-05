@@ -23,7 +23,7 @@ type (
 )
 
 func CreateOutputsConfig(out StepOutputs) *[]slack.WorkflowStepOutput {
-	if out == nil || len(out) == 0 {
+	if len(out) == 0 {
 		return nil
 	}
 
