@@ -23,6 +23,7 @@ type StepInputConfigText struct {
 	Name                    string
 	Placeholder             string
 	Emoji                   bool
+	Multiline               bool
 	Verbatim                bool
 	SkipVariableReplacement bool
 }
@@ -86,6 +87,7 @@ func CreateInputsBlock(inputs StepInputs) map[StepInputConfigKey]*slack.InputBlo
 				value.BlockID,
 				cfg.Name,
 				cfg.Placeholder,
+				cfg.Multiline,
 				cfg.Emoji,
 				cfg.Verbatim,
 			)

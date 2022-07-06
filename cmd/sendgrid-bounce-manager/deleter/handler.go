@@ -31,6 +31,7 @@ var (
 	EmailInputConfig = bot.StepInputConfigText{
 		Name:                    string(EmailInputKey),
 		Placeholder:             "",
+		Multiline:               false,
 		Emoji:                   false,
 		Verbatim:                false,
 		SkipVariableReplacement: false,
@@ -39,6 +40,7 @@ var (
 	TokenInputConfig = bot.StepInputConfigText{
 		Name:                    string(TokenInputKey),
 		Placeholder:             "",
+		Multiline:               false,
 		Emoji:                   false,
 		Verbatim:                false,
 		SkipVariableReplacement: true,

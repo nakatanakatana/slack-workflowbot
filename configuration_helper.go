@@ -27,6 +27,7 @@ func CreateTextInputBlock(
 	bID BlockID,
 	name string,
 	placeholder string,
+	multiline bool,
 	emoji bool,
 	verbatim bool,
 ) *slack.InputBlock {
@@ -38,6 +39,7 @@ func CreateTextInputBlock(
 	}
 
 	textElement := slack.NewPlainTextInputBlockElement(placeholderBlock, string(aID))
+	textElement.Multiline = multiline
 	textInput := slack.NewInputBlock(string(bID), text, nil, textElement)
 
 	return textInput
