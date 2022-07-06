@@ -76,10 +76,16 @@ func CreateInputsConfig(blockAction BlockActionValues, inputs StepInputs) *slack
 	return MergeWorkflowStepInput(in[:i]...)
 }
 
-func CreateInputsBlock(inputs StepInputs) map[StepInputConfigKey]*slack.InputBlock {
+func CreateInputsBlock(inputs StepInputs, values *slack.WorkflowStepInputs) map[StepInputConfigKey]*slack.InputBlock {
 	results := make(map[StepInputConfigKey]*slack.InputBlock)
+	inputValues := *values
 
 	for key, value := range inputs {
+		input := ""
+		if v, ok := inputValues[string(key)]; ok {
+			input = v.Value
+		}
+
 		switch cfg := value.Config.(type) {
 		case StepInputConfigText:
 			results[key] = CreateTextInputBlock(
@@ -87,6 +93,7 @@ func CreateInputsBlock(inputs StepInputs) map[StepInputConfigKey]*slack.InputBlo
 				value.BlockID,
 				cfg.Name,
 				cfg.Placeholder,
+				input,
 				cfg.Multiline,
 				cfg.Emoji,
 				cfg.Verbatim,

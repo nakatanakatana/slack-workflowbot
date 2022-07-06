@@ -83,7 +83,7 @@ func CreateConfigView(cli bot.SlackWorkflowConfigurationClient) bot.ConfigView {
 		privateMetaData string,
 		externalID string,
 	) error {
-		inBlocks := bot.CreateInputsBlock(StepInputConfig)
+		inBlocks := bot.CreateInputsBlock(StepInputConfig, message.WorkflowStep.Inputs)
 
 		blocks := slack.Blocks{
 			BlockSet: []slack.Block{
